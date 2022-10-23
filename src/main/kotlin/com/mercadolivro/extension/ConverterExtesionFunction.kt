@@ -1,7 +1,7 @@
 package com.mercadolivro.extension
 
-import com.mercadolivro.controller.BookResponse
-import com.mercadolivro.controller.PutBookRequest
+import com.mercadolivro.controller.response.BookResponse
+import com.mercadolivro.controller.request.PutBookRequest
 import com.mercadolivro.controller.request.PostBookRequest
 import com.mercadolivro.controller.request.PostCustomerRequest
 import com.mercadolivro.controller.request.PutCustomerRequest

@@ -1,6 +1,8 @@
 package com.mercadolivro.controller
 
 import com.mercadolivro.controller.request.PostBookRequest
+import com.mercadolivro.controller.request.PutBookRequest
+import com.mercadolivro.controller.response.BookResponse
 import com.mercadolivro.extension.toBookModel
 import com.mercadolivro.extension.toResponse
 import com.mercadolivro.service.BookService
@@ -10,6 +12,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
+import javax.validation.Valid
 
 @RestController
 @RequestMapping("book")
@@ -20,7 +23,7 @@ class BookController(
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody request: PostBookRequest) {
+    fun create(@RequestBody @Valid request: PostBookRequest) {
         val customer = customerService.findById(request.customerId)
         bookService.create(request.toBookModel(customer))
     }
@@ -35,7 +38,7 @@ class BookController(
         bookService.findActives(pageable).map { it.toResponse() }
 
     @GetMapping("/{id}")
-    fun findById(@PathVariable id: Int): BookResponse{
+    fun findById(@PathVariable id: Int): BookResponse {
       return bookService.findById(id).toResponse()
     }
 

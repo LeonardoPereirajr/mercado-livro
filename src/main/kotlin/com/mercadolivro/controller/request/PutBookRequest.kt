@@ -1,4 +1,4 @@
-package com.mercadolivro.controller
+package com.mercadolivro.controller.request
 
 import java.math.BigDecimal
 
