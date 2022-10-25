@@ -1,7 +1,6 @@
 package com.mercadolivro.service
 
 import com.mercadolivro.enums.CustomerStatus
-import com.mercadolivro.enums.Errors
 import com.mercadolivro.enums.Role
 import com.mercadolivro.model.CustomerModel
 import com.mercadolivro.repository.CustomerRepository
@@ -10,11 +9,8 @@ import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.SpyK
 import io.mockk.junit5.MockKExtension
-import io.mockk.just
-import io.mockk.runs
 import io.mockk.verify
-import javassist.NotFoundException
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
@@ -166,7 +162,7 @@ class CustomerServiceTest{
 //
 //    }
 
-    fun buildCustomer(
+    private fun buildCustomer(
         id: Int? = null,
         name: String = "customer name",
         email: String = "${UUID.randomUUID()}@email.com",
