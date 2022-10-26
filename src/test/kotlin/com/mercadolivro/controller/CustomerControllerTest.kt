@@ -2,6 +2,7 @@ package com.mercadolivro.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.mercadolivro.controller.request.PostCustomerRequest
+import com.mercadolivro.controller.request.PutCustomerRequest
 import com.mercadolivro.enums.CustomerStatus
 import com.mercadolivro.enums.Role
 import com.mercadolivro.model.CustomerModel
@@ -19,11 +20,11 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.*
+import kotlin.random.Random
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -97,6 +98,22 @@ class CustomerControllerTest {
     }
 
     @Test
+    fun `should throw erro when create customer has invalid information`() {
+        val request = PostCustomerRequest("", "${Random.nextInt()}fake@email.com", "123456")
+
+        mockMvc.perform(
+            post("/customer")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.httpCode").value(422))
+            .andExpect(jsonPath("$.message").value("Invalid request"))
+            .andExpect(jsonPath("$.internalCode").value("ML-001"))
+
+    }
+
+    @Test
     fun `should get user by id when user has the same id`() {
         val customer = customerRepository.save(buildCustomer())
 
@@ -125,6 +142,85 @@ class CustomerControllerTest {
             .andExpect(jsonPath("$.httpCode").value(403))
     }
 
+    @Test
+    @WithMockUser(roles = ["ADMIN"])
+    fun `should get user by id when user  id is admin`() {
+        val customer = customerRepository.save(buildCustomer())
+
+        mockMvc.perform(get("/customer/${customer.id}"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(customer.id))
+            .andExpect(jsonPath("$.name").value(customer.name))
+            .andExpect(jsonPath("$.email").value(customer.email))
+            .andExpect(jsonPath("$.status").value(customer.status.name))
+    }
+
+    @Test
+    fun `should UPDATE customer`() {
+        val customer = customerRepository.save(buildCustomer())
+        val request = PutCustomerRequest("fake name", "fake@email.com")
+
+        mockMvc.perform(put("/customer/${customer.id}")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNoContent)
+
+
+        val customers = customerRepository.findAll().toList()
+        assertEquals(1, customers.size)
+        assertEquals(request.name, customers[0].name)
+        assertEquals(request.email, customers[0].email)
+
+    }
+
+    @Test
+    fun `should throw erro when update customer has invalid information`() {
+        val request = PutCustomerRequest("", "${Random.nextInt()}fake@email.com")
+
+        mockMvc.perform(
+            put("/customer/1")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.httpCode").value(422))
+            .andExpect(jsonPath("$.message").value("Invalid request"))
+            .andExpect(jsonPath("$.internalCode").value("ML-001"))
+    }
+
+    @Test
+    fun `should delete customer`(){
+        val customer = customerRepository.save(buildCustomer())
+        mockMvc.perform(delete("/customer/${customer.id}"))
+            .andExpect(status().isNoContent)
+
+        val customerDeleted = customerRepository.findById(customer.id!!)
+        assertEquals(CustomerStatus.INATIVO,customerDeleted.get().status)
+    }
+
+    @Test
+    fun `should return not found when delete customer not exist`(){
+        mockMvc.perform(delete("/customer/1"))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.httpCode").value(404))
+            .andExpect(jsonPath("$.message").value("Customer [1] not exist"))
+            .andExpect(jsonPath("$.internalCode").value("ML-201"))
+
+    }
+
+    @Test
+    fun `should should return not found when UPDATE customer not exist`() {
+        val request = PutCustomerRequest("fake name", "fake@email.com")
+
+        mockMvc.perform(put("/customer/1")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.httpCode").value(404))
+            .andExpect(jsonPath("$.message").value("Customer [1] not exist"))
+            .andExpect(jsonPath("$.internalCode").value("ML-201"))
+
+    }
 
     private fun buildCustomer(
         id: Int? = null,
